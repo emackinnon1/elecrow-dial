@@ -73,8 +73,8 @@ touchscreen:
     skip_probe: true
     transform:
       mirror_x: false
-      mirror_y: true
-      swap_xy: true
+      mirror_y: false
+      swap_xy: false
     on_touch:
       - script.execute:
           id: dial_register_activity
@@ -87,7 +87,7 @@ touchscreen:
               const bool hit = touch.x >= area.x1 && touch.x <= area.x2 &&
                                touch.y >= area.y1 && touch.y <= area.y2;
               const bool hidden = lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN);
-              ESP_LOGI("touch_map", "%s mapped=(%d,%d) raw=(%d,%d) bounds=[%d,%d..%d,%d] hit=%s hidden=%s",
+              ESP_LOGI("touch_map", "%s mapped=(%d,%d) axis_adjusted=(%d,%d) bounds=[%d,%d..%d,%d] hit=%s hidden=%s",
                        name, touch.x, touch.y, touch.x_raw, touch.y_raw,
                        area.x1, area.y1, area.x2, area.y2,
                        hit ? "yes" : "no", hidden ? "yes" : "no");

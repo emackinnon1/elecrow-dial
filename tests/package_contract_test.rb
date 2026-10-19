@@ -59,6 +59,8 @@ class PackageContractTest < Minitest::Test
   def test_wrapper_and_hardware_boot_ownership
     assert_equal({'packages' => {'elecrow_dial' => 'dial.yaml'}}, load_yaml('elecrow-dial.yaml'))
     assert_equal package_files('dial.yaml'), package_files('elecrow-dial.yaml').drop(1)
+    touch = load_yaml('src/main/hardware.yaml')['touchscreen'].find { |item| item['id'] == 'touch' }
+    assert_equal({'mirror_x' => false, 'mirror_y' => false, 'swap_xy' => false}, touch['transform'])
     entry = load_yaml('example_entry.yaml')
     assert_equal({'name' => 'bedroom-elecrow-dial', 'friendly_name' => 'bedroom elecrow dial'}, entry['esphome'])
     assert_empty entry.keys & %w[esp32 psram output touchscreen sensor binary_sensor]
