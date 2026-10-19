@@ -1,4 +1,4 @@
 substitutions:
-  # Change these to match your Home Assistant instance before flashing.
+  # Override these in the local device entry file.
   weather_entity: weather.your_location
-  aqi_entity: sensor.jardin_aqi
+  aqi_entity: sensor.your_aqi

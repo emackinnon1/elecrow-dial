@@ -1,0 +1,147 @@
+substitutions:
+  package_ref: main
+  asset_ref: ${package_ref}
+  timezone: America/Chicago
+
+  weather_entity: weather.openweathermap
+  aqi_entity: sensor.chi_sp_illinois_usa_air_quality_index
+  light_entity: light.living_room_light_group
+  climate_entity: climate.living_room_window_ac
+  music_player_entity: media_player.living_room
+
+  screen_return_timeout: 30s
+  screen_dim_timeout: 15s
+  screen_off_timeout: 60s
+  screen_dim_brightness: "20%"
+
+esphome:
+  name: bedroom-elecrow-dial
+  friendly_name: bedroom elecrow dial
+
+api:
+  encryption:
+    # Public dummy key for validation. Replace before flashing.
+    key: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+
+ota:
+  - platform: esphome
+    # Public dummy password. Replace before flashing.
+    password: change-me-ota-password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: bedroom elecrow Fallback Hotspot
+    # Public dummy password. Replace before flashing.
+    password: change-me-fallback-password
+
+captive_portal:
+
+dial_lights:
+  - entity_id: light.living_room_light_group
+    name: Living Room group
+    state_sensor: dial_light_living_room_state
+    modes_sensor: dial_light_living_room_modes
+    brightness_sensor: dial_light_living_room_brightness
+    color_sensor: dial_light_living_room_rgb
+    color_mode_sensor: dial_light_living_room_color_mode
+    color_temp_kelvin_sensor: dial_light_living_room_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_living_room_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_living_room_max_color_temp_kelvin
+  - entity_id: light.living_room_1_light_sengled
+    name: Light 1
+    state_sensor: dial_light_living_room_1_light_state
+    modes_sensor: dial_light_living_room_1_light_modes
+    brightness_sensor: dial_light_living_room_1_light_brightness
+    color_sensor: dial_light_living_room_1_light_rgb
+    color_mode_sensor: dial_light_living_room_1_light_color_mode
+    color_temp_kelvin_sensor: dial_light_living_room_1_light_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_living_room_1_light_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_living_room_1_light_max_color_temp_kelvin
+  - entity_id: light.living_room_2_light_sengled
+    name: Light 2
+    state_sensor: dial_light_living_room_2_light_state
+    modes_sensor: dial_light_living_room_2_light_modes
+    brightness_sensor: dial_light_living_room_2_light_brightness
+    color_sensor: dial_light_living_room_2_light_rgb
+    color_mode_sensor: dial_light_living_room_2_light_color_mode
+    color_temp_kelvin_sensor: dial_light_living_room_2_light_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_living_room_2_light_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_living_room_2_light_max_color_temp_kelvin
+  - entity_id: light.living_room_light_3_thirdreality
+    name: Light 3
+    state_sensor: dial_light_living_room_light_3_state
+    modes_sensor: dial_light_living_room_light_3_modes
+    brightness_sensor: dial_light_living_room_light_3_brightness
+    color_sensor: dial_light_living_room_light_3_rgb
+    color_mode_sensor: dial_light_living_room_light_3_color_mode
+    color_temp_kelvin_sensor: dial_light_living_room_light_3_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_living_room_light_3_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_living_room_light_3_max_color_temp_kelvin
+  - entity_id: light.living_room_light_4_thirdreality
+    name: Light 4
+    state_sensor: dial_light_living_room_light_4_state
+    modes_sensor: dial_light_living_room_light_4_modes
+    brightness_sensor: dial_light_living_room_light_4_brightness
+    color_sensor: dial_light_living_room_light_4_rgb
+    color_mode_sensor: dial_light_living_room_light_4_color_mode
+    color_temp_kelvin_sensor: dial_light_living_room_light_4_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_living_room_light_4_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_living_room_light_4_max_color_temp_kelvin
+  - entity_id: light.living_room_light_5_thirdreality
+    name: Light 5
+    state_sensor: dial_light_living_room_light_5_state
+    modes_sensor: dial_light_living_room_light_5_modes
+    brightness_sensor: dial_light_living_room_light_5_brightness
+    color_sensor: dial_light_living_room_light_5_rgb
+    color_mode_sensor: dial_light_living_room_light_5_color_mode
+    color_temp_kelvin_sensor: dial_light_living_room_light_5_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_living_room_light_5_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_living_room_light_5_max_color_temp_kelvin
+  - entity_id: light.fancy_bulb_standing
+    name: Fancy light
+    state_sensor: dial_light_fancy_bulb_standing_state
+    modes_sensor: dial_light_fancy_bulb_standing_modes
+    brightness_sensor: dial_light_fancy_bulb_standing_brightness
+    color_sensor: dial_light_fancy_bulb_standing_rgb
+    color_mode_sensor: dial_light_fancy_bulb_standing_color_mode
+    color_temp_kelvin_sensor: dial_light_fancy_bulb_standing_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_fancy_bulb_standing_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_fancy_bulb_standing_max_color_temp_kelvin
+
+packages:
+  smart_home_button:
+    url: https://github.com/emackinnon1/elecrow-dial
+    ref: ${package_ref}
+    files:
+      - dial.yaml
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.living_room_light_group
+          light_sensor_prefix: living_room
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.living_room_1_light_sengled
+          light_sensor_prefix: living_room_1_light
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.living_room_2_light_sengled
+          light_sensor_prefix: living_room_2_light
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.living_room_light_3_thirdreality
+          light_sensor_prefix: living_room_light_3
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.living_room_light_4_thirdreality
+          light_sensor_prefix: living_room_light_4
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.living_room_light_5_thirdreality
+          light_sensor_prefix: living_room_light_5
+      - path: src/main/dial_lights_sensors.yaml
+        vars:
+          light_entity_id: light.fancy_bulb_standing
+          light_sensor_prefix: fancy_bulb_standing
+    refresh: 0s

@@ -38,27 +38,27 @@ color:
     hex: "2A3348"
 
 image:
-  - file: src/assets/images/bulb.png
+  - file: ${assets_base_url}/images/bulb.png
     id: menu_img_light
     type: RGB565
     transparency: alpha_channel
     resize: 34x34
-  - file: src/assets/images/ac_logo.png
+  - file: ${assets_base_url}/images/ac_logo.png
     id: menu_img_ac
     type: RGB565
     transparency: alpha_channel
     resize: 32x32
-  - file: src/assets/images/music.png
+  - file: ${assets_base_url}/images/music.png
     id: menu_img_music
     type: RGB565
     transparency: alpha_channel
     resize: 34x34
-  - file: src/assets/images/timer.png
+  - file: ${assets_base_url}/images/timer.png
     id: menu_img_timer
     type: RGB565
     transparency: alpha_channel
     resize: 32x32
-  - file: src/assets/images/home.png
+  - file: ${assets_base_url}/images/home.png
     id: menu_img_home
     type: RGB565
     transparency: alpha_channel

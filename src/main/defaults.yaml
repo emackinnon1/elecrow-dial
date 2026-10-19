@@ -1,2 +1,13 @@
 # Default empty lights list when dial_lights is omitted from the user config.
 dial_lights: []
+
+substitutions:
+  timezone: America/Chicago
+  light_entity: light.your_light
+  screen_dim_timeout: 45s
+  screen_return_timeout: 5min
+  screen_off_timeout: 30min
+  screen_dim_brightness: "20%"
+  encoder_control_steps: "1"
+  asset_ref: main
+  assets_base_url: https://raw.githubusercontent.com/emackinnon1/elecrow-dial/${asset_ref}/src/assets

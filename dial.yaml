@@ -1,0 +1,134 @@
+packages:
+  defaults: !include src/main/defaults.yaml
+  hardware: !include src/main/hardware.yaml
+  entities: !include src/main/entities.yaml
+  entities_demo: !include src/main/entities_demo.yaml
+  load_page: !include src/pages/load.yaml
+  clock_page: !include src/pages/main.yaml
+  menu_page: !include src/pages/menu.yaml
+  light_page: !include src/pages/light.yaml
+  light_selector_page: !include src/pages/light_selector.yaml
+  air_page: !include src/pages/air.yaml
+  music_page: !include src/pages/music.yaml
+  timer_page: !include src/pages/timer.yaml
+  idle: !include src/main/idle.yaml
+
+external_components:
+  - source: github://emackinnon1/m5stack-dial-home-assistant@4d7c49c45713a4a145336a5c8dbb95d42c7f7fb5
+    components: [dial_lights, dial_carousel]
+
+esphome:
+  platformio_options:
+    build_flags: "-DBOARD_HAS_PSRAM"
+    board_build.esp-idf.memory_type: qio_opi
+    board_build.flash_mode: dio
+  on_boot:
+    - priority: 800
+      then:
+        - output.turn_on: gpio_3_backlight_pwm
+        - delay: 200ms
+        - output.turn_off: power_light
+        - output.turn_on: out1
+        - output.turn_on: out2
+    - priority: -100
+      then:
+        - light.turn_on:
+            id: display_backlight
+            brightness: 100%
+        - script.execute: refresh_clock
+        - script.execute: update_loading_page
+
+esp32:
+  board: esp32-s3-devkitc-1
+  variant: esp32s3
+  framework:
+    type: esp-idf
+    version: recommended
+
+logger:
+  level: INFO
+
+api:
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - script.execute: on_ha_connected
+  on_client_disconnected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - globals.set:
+              id: ha_connected
+              value: 'false'
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+globals:
+  - id: ha_connected
+    type: bool
+    initial_value: 'false'
+
+image:
+  - file: ${assets_base_url}/images/logo.png
+    id: logo_img
+    type: RGB565
+    transparency: alpha_channel
+    resize: 72x72
+  - file: ${assets_base_url}/images/scene.png
+    id: img_scene
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: ${assets_base_url}/images/bulb.png
+    id: img_light
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: ${assets_base_url}/images/ac.png
+    id: img_ac
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: ${assets_base_url}/images/music.png
+    id: img_music
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: ${assets_base_url}/images/palette.png
+    id: img_palette
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: ${assets_base_url}/images/brightness.png
+    id: img_brightness
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: ${assets_base_url}/images/light.png
+    id: img_dengguang
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+
+color:
+  - id: col_bg
+    hex: "050812"
+  - id: col_text_pri
+    hex: "EEF2FF"
+  - id: col_text_sec
+    hex: "6B7FCC"
+
+lvgl:
+  displays:
+    - round_display
+  touchscreens:
+    - touch
+  buffer_size: "12%"
+  color_depth: 16
+  bg_color: col_bg
+  default_font: font_lbl

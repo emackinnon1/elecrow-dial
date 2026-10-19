@@ -153,6 +153,7 @@ light:
 sensor:
   - platform: rotary_encoder
     id: encoder
+    name: "Encoder"
     pin_a:
       number: GPIO45
       mode: INPUT_PULLUP

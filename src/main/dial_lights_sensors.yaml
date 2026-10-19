@@ -1,181 +1,46 @@
 text_sensor:
   - platform: homeassistant
-    id: dial_light_bedroom_state
-    entity_id: light.bedroom_light_group
+    id: dial_light_${light_sensor_prefix}_state
+    entity_id: ${light_entity_id}
     internal: true
     on_value:
       - script.execute: menu_on_ha_update
   - platform: homeassistant
-    id: dial_light_bedroom_modes
-    entity_id: light.bedroom_light_group
+    id: dial_light_${light_sensor_prefix}_modes
+    entity_id: ${light_entity_id}
     attribute: supported_color_modes
     internal: true
   - platform: homeassistant
-    id: dial_light_bedroom_rgb
-    entity_id: light.bedroom_light_group
+    id: dial_light_${light_sensor_prefix}_rgb
+    entity_id: ${light_entity_id}
     attribute: rgb_color
     internal: true
   - platform: homeassistant
-    id: dial_light_bedroom_color_mode
-    entity_id: light.bedroom_light_group
-    attribute: color_mode
-    internal: true
-
-  - platform: homeassistant
-    id: dial_light_bedroom_1_state
-    entity_id: light.bedroom_light_1_sengled
-    internal: true
-    on_value:
-      - script.execute: menu_on_ha_update
-  - platform: homeassistant
-    id: dial_light_bedroom_1_modes
-    entity_id: light.bedroom_light_1_sengled
-    attribute: supported_color_modes
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_1_rgb
-    entity_id: light.bedroom_light_1_sengled
-    attribute: rgb_color
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_1_color_mode
-    entity_id: light.bedroom_light_1_sengled
-    attribute: color_mode
-    internal: true
-
-  - platform: homeassistant
-    id: dial_light_bedroom_2_state
-    entity_id: light.bedroom_light_2_sengled
-    internal: true
-    on_value:
-      - script.execute: menu_on_ha_update
-  - platform: homeassistant
-    id: dial_light_bedroom_2_modes
-    entity_id: light.bedroom_light_2_sengled
-    attribute: supported_color_modes
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_2_rgb
-    entity_id: light.bedroom_light_2_sengled
-    attribute: rgb_color
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_2_color_mode
-    entity_id: light.bedroom_light_2_sengled
-    attribute: color_mode
-    internal: true
-
-  - platform: homeassistant
-    id: dial_light_table_lamp_state
-    entity_id: light.table_lamp_sengled
-    internal: true
-    on_value:
-      - script.execute: menu_on_ha_update
-  - platform: homeassistant
-    id: dial_light_table_lamp_modes
-    entity_id: light.table_lamp_sengled
-    attribute: supported_color_modes
-    internal: true
-  - platform: homeassistant
-    id: dial_light_table_lamp_rgb
-    entity_id: light.table_lamp_sengled
-    attribute: rgb_color
-    internal: true
-  - platform: homeassistant
-    id: dial_light_table_lamp_color_mode
-    entity_id: light.table_lamp_sengled
+    id: dial_light_${light_sensor_prefix}_color_mode
+    entity_id: ${light_entity_id}
     attribute: color_mode
     internal: true
 
 sensor:
   - platform: homeassistant
-    id: dial_light_bedroom_brightness
-    entity_id: light.bedroom_light_group
+    id: dial_light_${light_sensor_prefix}_brightness
+    entity_id: ${light_entity_id}
     attribute: brightness
     internal: true
     on_value:
       - script.execute: menu_on_ha_update
   - platform: homeassistant
-    id: dial_light_bedroom_color_temp_kelvin
-    entity_id: light.bedroom_light_group
+    id: dial_light_${light_sensor_prefix}_color_temp_kelvin
+    entity_id: ${light_entity_id}
     attribute: color_temp_kelvin
     internal: true
   - platform: homeassistant
-    id: dial_light_bedroom_min_color_temp_kelvin
-    entity_id: light.bedroom_light_group
+    id: dial_light_${light_sensor_prefix}_min_color_temp_kelvin
+    entity_id: ${light_entity_id}
     attribute: min_color_temp_kelvin
     internal: true
   - platform: homeassistant
-    id: dial_light_bedroom_max_color_temp_kelvin
-    entity_id: light.bedroom_light_group
-    attribute: max_color_temp_kelvin
-    internal: true
-
-  - platform: homeassistant
-    id: dial_light_bedroom_1_brightness
-    entity_id: light.bedroom_light_1_sengled
-    attribute: brightness
-    internal: true
-    on_value:
-      - script.execute: menu_on_ha_update
-  - platform: homeassistant
-    id: dial_light_bedroom_1_color_temp_kelvin
-    entity_id: light.bedroom_light_1_sengled
-    attribute: color_temp_kelvin
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_1_min_color_temp_kelvin
-    entity_id: light.bedroom_light_1_sengled
-    attribute: min_color_temp_kelvin
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_1_max_color_temp_kelvin
-    entity_id: light.bedroom_light_1_sengled
-    attribute: max_color_temp_kelvin
-    internal: true
-
-  - platform: homeassistant
-    id: dial_light_bedroom_2_brightness
-    entity_id: light.bedroom_light_2_sengled
-    attribute: brightness
-    internal: true
-    on_value:
-      - script.execute: menu_on_ha_update
-  - platform: homeassistant
-    id: dial_light_bedroom_2_color_temp_kelvin
-    entity_id: light.bedroom_light_2_sengled
-    attribute: color_temp_kelvin
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_2_min_color_temp_kelvin
-    entity_id: light.bedroom_light_2_sengled
-    attribute: min_color_temp_kelvin
-    internal: true
-  - platform: homeassistant
-    id: dial_light_bedroom_2_max_color_temp_kelvin
-    entity_id: light.bedroom_light_2_sengled
-    attribute: max_color_temp_kelvin
-    internal: true
-
-  - platform: homeassistant
-    id: dial_light_table_lamp_brightness
-    entity_id: light.table_lamp_sengled
-    attribute: brightness
-    internal: true
-    on_value:
-      - script.execute: menu_on_ha_update
-  - platform: homeassistant
-    id: dial_light_table_lamp_color_temp_kelvin
-    entity_id: light.table_lamp_sengled
-    attribute: color_temp_kelvin
-    internal: true
-  - platform: homeassistant
-    id: dial_light_table_lamp_min_color_temp_kelvin
-    entity_id: light.table_lamp_sengled
-    attribute: min_color_temp_kelvin
-    internal: true
-  - platform: homeassistant
-    id: dial_light_table_lamp_max_color_temp_kelvin
-    entity_id: light.table_lamp_sengled
+    id: dial_light_${light_sensor_prefix}_max_color_temp_kelvin
+    entity_id: ${light_entity_id}
     attribute: max_color_temp_kelvin
     internal: true
