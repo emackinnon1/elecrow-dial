@@ -1,0 +1,4 @@
+substitutions:
+  # Change these to match your Home Assistant instance before flashing.
+  weather_entity: weather.your_location
+  aqi_entity: sensor.jardin_aqi

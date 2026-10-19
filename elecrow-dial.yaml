@@ -1,0 +1,208 @@
+packages:
+  defaults: !include src/main/defaults.yaml
+  hardware: !include src/main/hardware.yaml
+  entities: !include src/main/entities.yaml
+  entities_demo: !include src/main/entities_demo.yaml
+  dial_lights_sensors: !include src/main/dial_lights_sensors.yaml
+  load_page: !include src/pages/load.yaml
+  clock_page: !include src/pages/main.yaml
+  menu_page: !include src/pages/menu.yaml
+  light_page: !include src/pages/light.yaml
+  light_selector_page: !include src/pages/light_selector.yaml
+  air_page: !include src/pages/air.yaml
+  music_page: !include src/pages/music.yaml
+  timer_page: !include src/pages/timer.yaml
+  idle: !include src/main/idle.yaml
+
+external_components:
+  - source: github://emackinnon1/m5stack-dial-home-assistant@4d7c49c45713a4a145336a5c8dbb95d42c7f7fb5
+    components: [dial_lights, dial_carousel]
+
+substitutions:
+  timezone: America/Chicago
+  friendly_name: Rotary1.28-inch
+  weather_entity: weather.openweathermap
+  aqi_entity: sensor.chi_sp_illinois_usa_air_quality_index
+  light_entity: light.bedroom_light_group
+  climate_entity: climate.air_conditioner
+  music_player_entity: media_player.bedroom
+  timer_entity: timer.your_timer
+  screen_dim_timeout: 45s
+  screen_return_timeout: 5min
+  screen_off_timeout: 30min
+  screen_dim_brightness: "20%"
+  encoder_control_steps: "1"
+
+dial_lights:
+  - entity_id: light.bedroom_light_group
+    name: Bedroom
+    state_sensor: dial_light_bedroom_state
+    modes_sensor: dial_light_bedroom_modes
+    brightness_sensor: dial_light_bedroom_brightness
+    color_sensor: dial_light_bedroom_rgb
+    color_mode_sensor: dial_light_bedroom_color_mode
+    color_temp_kelvin_sensor: dial_light_bedroom_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_bedroom_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_bedroom_max_color_temp_kelvin
+  - entity_id: light.bedroom_light_1_sengled
+    name: Bedroom 1
+    state_sensor: dial_light_bedroom_1_state
+    modes_sensor: dial_light_bedroom_1_modes
+    brightness_sensor: dial_light_bedroom_1_brightness
+    color_sensor: dial_light_bedroom_1_rgb
+    color_mode_sensor: dial_light_bedroom_1_color_mode
+    color_temp_kelvin_sensor: dial_light_bedroom_1_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_bedroom_1_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_bedroom_1_max_color_temp_kelvin
+  - entity_id: light.bedroom_light_2_sengled
+    name: Bedroom 2
+    state_sensor: dial_light_bedroom_2_state
+    modes_sensor: dial_light_bedroom_2_modes
+    brightness_sensor: dial_light_bedroom_2_brightness
+    color_sensor: dial_light_bedroom_2_rgb
+    color_mode_sensor: dial_light_bedroom_2_color_mode
+    color_temp_kelvin_sensor: dial_light_bedroom_2_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_bedroom_2_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_bedroom_2_max_color_temp_kelvin
+  - entity_id: light.table_lamp_sengled
+    name: Table Lamp
+    state_sensor: dial_light_table_lamp_state
+    modes_sensor: dial_light_table_lamp_modes
+    brightness_sensor: dial_light_table_lamp_brightness
+    color_sensor: dial_light_table_lamp_rgb
+    color_mode_sensor: dial_light_table_lamp_color_mode
+    color_temp_kelvin_sensor: dial_light_table_lamp_color_temp_kelvin
+    min_color_temp_kelvin_sensor: dial_light_table_lamp_min_color_temp_kelvin
+    max_color_temp_kelvin_sensor: dial_light_table_lamp_max_color_temp_kelvin
+
+esphome:
+  name: elecrowrotary128-inch
+  platformio_options:
+    build_flags: "-DBOARD_HAS_PSRAM"
+    board_build.esp-idf.memory_type: qio_opi
+    board_build.flash_mode: dio
+  friendly_name: ${friendly_name}
+  on_boot:
+    - priority: 800
+      then:
+        - output.turn_on: gpio_3_backlight_pwm
+        - delay: 200ms
+        - output.turn_off: power_light
+        - output.turn_on: out1
+        - output.turn_on: out2
+    - priority: -100
+      then:
+        - light.turn_on:
+            id: display_backlight
+            brightness: 100%
+        - script.execute: refresh_clock
+        - script.execute: update_loading_page
+
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+    version: recommended
+
+logger:
+  level: INFO
+
+api:
+  encryption:
+    key: !secret encryption_key
+  on_client_connected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - script.execute: on_ha_connected
+  on_client_disconnected:
+    - if:
+        condition:
+          lambda: 'return (0 == client_info.find("Home Assistant "));'
+        then:
+          - globals.set:
+              id: ha_connected
+              value: 'false'
+
+ota:
+  - platform: esphome
+    password: !secret ota_key
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${friendly_name} Hotspot"
+    password: "6T3RFWEF71"
+
+captive_portal:
+
+psram:
+  mode: octal
+  speed: 80MHz
+
+globals:
+  - id: ha_connected
+    type: bool
+    initial_value: 'false'
+
+image:
+  - file: src/assets/images/logo.png
+    id: logo_img
+    type: RGB565
+    transparency: alpha_channel
+    resize: 72x72
+  - file: src/assets/images/scene.png
+    id: img_scene
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: src/assets/images/bulb.png
+    id: img_light
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: src/assets/images/ac.png
+    id: img_ac
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: src/assets/images/music.png
+    id: img_music
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: src/assets/images/palette.png
+    id: img_palette
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: src/assets/images/brightness.png
+    id: img_brightness
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+  - file: src/assets/images/light.png
+    id: img_dengguang
+    type: RGB565
+    transparency: alpha_channel
+    resize: 24x24
+
+color:
+  - id: col_bg
+    hex: "050812"
+  - id: col_text_pri
+    hex: "EEF2FF"
+  - id: col_text_sec
+    hex: "6B7FCC"
+
+lvgl:
+  displays:
+    - round_display
+  touchscreens:
+    - touch
+  buffer_size: "12%"
+  color_depth: 16
+  bg_color: col_bg
+  default_font: font_lbl
