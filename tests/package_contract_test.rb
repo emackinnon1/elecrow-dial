@@ -85,12 +85,12 @@ class PackageContractTest < Minitest::Test
     assert_equal 'dial.yaml', remote['files'][0]
   end
 
-  def test_zero_one_and_seven_light_bindings
+  def test_zero_one_and_four_light_bindings
     entry = load_yaml('example_entry.yaml')
     instances = entry['packages']['smart_home_button']['files'].drop(1)
-    assert_equal 7, instances.length
-    assert_equal 7, entry['dial_lights'].length
-    [0, 1, 7].each do |count|
+    assert_equal 4, instances.length
+    assert_equal 4, entry['dial_lights'].length
+    [0, 1, 4].each do |count|
       sensors_by_id = {}
       instances.take(count).each do |instance|
         assert_equal TEMPLATE, instance['path']
@@ -123,7 +123,7 @@ class PackageContractTest < Minitest::Test
     entry = load_yaml('example_entry.yaml')
     shared = package_files('dial.yaml').map { |path| load_yaml(path) }
     instances = entry['packages']['smart_home_button']['files'].drop(1)
-    [0, 1, 7].each do |count|
+    [0, 1, 4].each do |count|
       consumer = entry.merge('dial_lights' => entry['dial_lights'].take(count))
       configurations = shared + instances.take(count).map do |instance|
         load_yaml(instance['path'], instance['vars'])

@@ -47,7 +47,7 @@ integration's device options so light, climate and music commands can run.
 ## Configuring Lights
 
 Lights default to an empty list and the Lights menu is hidden. The example
-configures seven lights using explicit `dial_lights` bindings. Each light also
+configures four lights using explicit `dial_lights` bindings. Each light also
 needs one instance of the remote
 [sensor template](src/main/dial_lights_sensors.yaml), with a unique
 `light_sensor_prefix` and its `light_entity_id`. The template creates four text
@@ -171,8 +171,8 @@ The static package checks use Ruby's standard library and Minitest:
 ```
 
 They check YAML keys, configuration ownership, wrapper includes, dummy key
-format, revision alignment, zero/one/seven-light bindings and asset sources.
-The seven-light example has 56 sensor bindings. These checks do not run
+format, revision alignment, zero/one/four-light bindings and asset sources.
+The four-light example has 32 sensor bindings. These checks do not run
 ESPHome's package loader/schema validator, compile firmware or prove a remote
 import works. A generic YAML extension may flag ESPHome's valid `!secret` and
 `!lambda` tags.
