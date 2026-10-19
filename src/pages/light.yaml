@@ -383,6 +383,8 @@ script:
           }
 
           id(light_white_kelvin_prev) = id(light_white_kelvin);
+          ESP_LOGI("light_ui", "Opening color picker: rgb=%d kelvin=%d mode=%d",
+                   rgb, ct, id(light_color_picker_mode));
       - globals.set: {id: in_light, value: 'false'}
       - globals.set: {id: in_colorpicker, value: 'true'}
       - script.execute: refresh_color_preview
@@ -763,6 +765,7 @@ lvgl:
             border_width: 0
             pad_all: 0
             scrollbar_mode: "OFF"
+            scrollable: false
             widgets:
               - arc:
                   id: light_arc
@@ -860,14 +863,25 @@ lvgl:
                   shadow_opa: 38%
                   shadow_spread: 0
                   clickable: true
+                  scrollable: false
                   scrollbar_mode: "OFF"
                   scroll_dir: NONE
+                  on_press:
+                    - lambda: |-
+                        ESP_LOGI("light_ui", "Palette pressed: rgb=%d kelvin=%d",
+                                 id(light_supports_rgb), id(light_supports_color_temp));
                   on_click:
+                    - lambda: |-
+                        ESP_LOGI("light_ui", "Palette clicked: rgb=%d kelvin=%d",
+                                 id(light_supports_rgb), id(light_supports_color_temp));
                     - if:
                         condition:
                           lambda: 'return id(light_supports_rgb) || id(light_supports_color_temp);'
                         then:
                           - script.execute: open_colorpicker
+                        else:
+                          - lambda: |-
+                              ESP_LOGW("light_ui", "Palette ignored: selected light reports no RGB or Kelvin support");
                   widgets:
                     - image:
                         src: light_img_palette
@@ -945,6 +959,7 @@ lvgl:
       scrollbar_mode: "OFF"
       on_load:
         - lambda: lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+        - lambda: ESP_LOGI("light_ui", "Color picker page loaded");
         - script.execute: refresh_color_preview
       widgets:
         - obj:
@@ -960,6 +975,7 @@ lvgl:
             border_width: 0
             pad_all: 0
             scrollbar_mode: "OFF"
+            scrollable: false
             widgets:
 
               - arc:

@@ -175,6 +175,28 @@ class PackageContractTest < Minitest::Test
     end
   end
 
+  def test_palette_opens_colorpicker_without_scroll_interception
+    light = load_yaml('src/pages/light.yaml')
+    pages = light['lvgl']['pages']
+    %w[page_light page_colorpicker].each do |id|
+      page = pages.find { |item| item['id'] == id }
+      assert_equal false, page['widgets'][0]['obj']['scrollable']
+    end
+    root = pages.find { |page| page['id'] == 'page_light' }['widgets'][0]['obj']
+    palette = root['widgets'].map { |widget| widget['obj'] }.compact.find do |widget|
+      widget['id'] == 'btn_palette'
+    end
+    assert_equal true, palette['clickable']
+    assert_equal false, palette['scrollable']
+    assert_equal false, palette['widgets'][0]['image']['clickable']
+    branch = palette['on_click'].find { |action| action.key?('if') }['if']
+    assert_equal [{'script.execute' => 'open_colorpicker'}], branch['then']
+    assert_includes branch['condition']['lambda'], 'light_supports_rgb'
+    assert_includes branch['condition']['lambda'], 'light_supports_color_temp'
+    opener = light['script'].find { |script| script['id'] == 'open_colorpicker' }
+    assert_equal 'page_colorpicker', opener['then'].last['lvgl.page.show']['id']
+  end
+
   def test_assets_have_no_consumer_local_file_dependency
     sources = []
     paths = ['dial.yaml'] + Dir.chdir(ROOT) { Dir['src/pages/*.yaml'] }
