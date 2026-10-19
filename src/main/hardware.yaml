@@ -326,6 +326,7 @@ binary_sensor:
     name: Button
     id: front_button
     pin: GPIO41
+    inverted: true
     on_state:
       - lambda: |-
           ESP_LOGI("dial_input", "GPIO41 state=%s", x ? "ON" : "OFF");
