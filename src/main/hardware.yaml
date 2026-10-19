@@ -68,6 +68,7 @@ touchscreen:
     address: 0x15
     interrupt_pin: GPIO5
     reset_pin: GPIO13
+    skip_probe: true
     transform:
       mirror_x: false
       mirror_y: true
@@ -325,6 +326,9 @@ binary_sensor:
     name: Button
     id: front_button
     pin: GPIO41
+    on_state:
+      - lambda: |-
+          ESP_LOGI("dial_input", "GPIO41 state=%s", x ? "ON" : "OFF");
     on_multi_click:
       - timing:
           - ON for at most 500ms
@@ -333,6 +337,9 @@ binary_sensor:
           - OFF for at least 40ms
         invalid_cooldown: 150ms
         then:
+          - logger.log:
+              level: INFO
+              format: "Button double click detected"
           - if:
               condition:
                 lambda: 'return !id(button_debounce);'
@@ -346,6 +353,9 @@ binary_sensor:
           - OFF for at least 520ms
         invalid_cooldown: 150ms
         then:
+          - logger.log:
+              level: INFO
+              format: "Button single click detected"
           - if:
               condition:
                 lambda: 'return !id(button_debounce);'
