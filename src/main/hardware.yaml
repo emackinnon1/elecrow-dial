@@ -81,14 +81,35 @@ touchscreen:
           source: "touch"
       - lambda: |-
           if (id(in_light) && id(btn_palette) != nullptr) {
-            lv_area_t palette_area;
-            lv_obj_get_coords(id(btn_palette), &palette_area);
-            const bool palette_hit = touch.x >= palette_area.x1 && touch.x <= palette_area.x2 &&
-                                     touch.y >= palette_area.y1 && touch.y <= palette_area.y2;
-            ESP_LOGI("touch_map", "mapped=(%d,%d) raw=(%d,%d) palette=[%d,%d..%d,%d] hit=%s",
-                     touch.x, touch.y, touch.x_raw, touch.y_raw,
-                     palette_area.x1, palette_area.y1, palette_area.x2, palette_area.y2,
-                     palette_hit ? "yes" : "no");
+            auto log_touch_target = [&](const char *name, lv_obj_t *obj) {
+              lv_area_t area;
+              lv_obj_get_coords(obj, &area);
+              const bool hit = touch.x >= area.x1 && touch.x <= area.x2 &&
+                               touch.y >= area.y1 && touch.y <= area.y2;
+              const bool hidden = lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN);
+              ESP_LOGI("touch_map", "%s mapped=(%d,%d) raw=(%d,%d) bounds=[%d,%d..%d,%d] hit=%s hidden=%s",
+                       name, touch.x, touch.y, touch.x_raw, touch.y_raw,
+                       area.x1, area.y1, area.x2, area.y2,
+                       hit ? "yes" : "no", hidden ? "yes" : "no");
+            };
+            log_touch_target("palette", id(btn_palette));
+            log_touch_target("power", id(btn_dengguang));
+            log_touch_target("onoff_main", id(onoff_main_btn));
+          } else if (id(in_colorpicker) && id(cp_mode_rgb_button) != nullptr) {
+            auto log_touch_target = [&](const char *name, lv_obj_t *obj) {
+              lv_area_t area;
+              lv_obj_get_coords(obj, &area);
+              const bool hit = touch.x >= area.x1 && touch.x <= area.x2 &&
+                               touch.y >= area.y1 && touch.y <= area.y2;
+              const bool hidden = lv_obj_has_flag(obj, LV_OBJ_FLAG_HIDDEN);
+              ESP_LOGI("touch_map", "%s mapped=(%d,%d) raw=(%d,%d) bounds=[%d,%d..%d,%d] hit=%s hidden=%s",
+                       name, touch.x, touch.y, touch.x_raw, touch.y_raw,
+                       area.x1, area.y1, area.x2, area.y2,
+                       hit ? "yes" : "no", hidden ? "yes" : "no");
+            };
+            log_touch_target("color_mode_rgb", id(cp_mode_rgb_button));
+            log_touch_target("color_mode_white", id(cp_mode_white_button));
+            log_touch_target("color_confirm", id(cw_color_circle));
           }
           if (id(idle_event_consumed)) {
             id(idle_touch_sequence_consumed) = true;

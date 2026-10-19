@@ -159,6 +159,13 @@ globals:
 script:
   - id: send_light_turn_on
     then:
+      - lambda: |-
+          const std::string target_entity = id(light_multilight_active)
+              ? id(dial_lights_id).active_entity_id()
+              : std::string("${light_entity}");
+          ESP_LOGI("light_ha", "send_light_turn_on entity=%s rgb=%d kelvin=%d brightness=%d brightness_pct=%d",
+                   target_entity.c_str(), id(light_supports_rgb), id(light_supports_color_temp),
+                   id(light_supports_brightness), id(light_brightness));
       - if:
           condition:
             lambda: 'return id(light_supports_rgb);'
@@ -315,6 +322,11 @@ script:
     then:
       - lambda: |-
           id(light_on) = !id(light_on);
+          const std::string target_entity = id(light_multilight_active)
+              ? id(dial_lights_id).active_entity_id()
+              : std::string("${light_entity}");
+          ESP_LOGI("light_ui", "Power toggled: entity=%s requested_state=%s multilight=%d",
+                   target_entity.c_str(), id(light_on) ? "ON" : "OFF", id(light_multilight_active));
           lv_color_t col = id(light_on)
             ? lv_color_make(id(light_color_r), id(light_color_g), id(light_color_b))
             : lv_color_hex(0x262626);
@@ -907,7 +919,10 @@ lvgl:
                   clickable: true
                   scrollbar_mode: "OFF"
                   scroll_dir: NONE
+                  on_press:
+                    - lambda: ESP_LOGI("light_ui", "Power icon pressed");
                   on_click:
+                    - lambda: ESP_LOGI("light_ui", "Power icon clicked");
                     - script.execute: toggle_light_onoff
                   widgets:
                     - image:
@@ -936,7 +951,10 @@ lvgl:
                   scrollbar_mode: "OFF"
                   scroll_dir: NONE
                   hidden: true
+                  on_press:
+                    - lambda: ESP_LOGI("light_ui", "Large power button pressed");
                   on_click:
+                    - lambda: ESP_LOGI("light_ui", "Large power button clicked");
                     - script.execute: toggle_light_onoff
                   widgets:
                     - image:
@@ -1059,7 +1077,10 @@ lvgl:
                         border_width: 0
                         clickable: true
                         scrollbar_mode: "OFF"
+                        on_press:
+                          - lambda: ESP_LOGI("light_ui", "COLOR mode pressed");
                         on_click:
+                          - lambda: ESP_LOGI("light_ui", "COLOR mode clicked");
                           - script.execute:
                               id: set_color_picker_mode
                               target_mode: 0
@@ -1083,7 +1104,10 @@ lvgl:
                         border_width: 0
                         clickable: true
                         scrollbar_mode: "OFF"
+                        on_press:
+                          - lambda: ESP_LOGI("light_ui", "WHITE mode pressed");
                         on_click:
+                          - lambda: ESP_LOGI("light_ui", "WHITE mode clicked");
                           - script.execute:
                               id: set_color_picker_mode
                               target_mode: 1
