@@ -133,8 +133,9 @@ power-hold, NFC, RTC or buzzer configuration is included.
 - Clock: HA time, refreshed immediately on sync and every minute. After cold
   boot it shows placeholders until synchronized. Time continues while powered
   after a sync; there is no battery-backed timekeeping.
-- Navigation: rotate to adjust/select, short press to accept, double press for
-  Back, and horizontal touch gestures. Input actions use the source scripts;
+- Navigation: rotate to adjust/select, press the physical button for Back
+  (single or double press), and use touch to select/confirm or swipe to navigate.
+  Input actions use the source scripts;
   the encoder/button are not additionally registered as LVGL focus inputs.
 - Climate: HA-native target values, minimum/maximum and `target_temp_step`.
   Missing step defaults to 1 degree. Temperature actions wait for valid target

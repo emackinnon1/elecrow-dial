@@ -361,6 +361,6 @@ binary_sensor:
                 lambda: 'return !id(button_debounce);'
               then:
                 - globals.set: {id: button_debounce, value: 'true'}
-                - script.execute: dial_simple_click
+                - script.execute: dial_back
                 - delay: 250ms
                 - globals.set: {id: button_debounce, value: 'false'}

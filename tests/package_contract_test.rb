@@ -163,6 +163,18 @@ class PackageContractTest < Minitest::Test
     end
   end
 
+  def test_button_clicks_navigate_back
+    button = load_yaml('src/main/hardware.yaml')['binary_sensor'].find do |sensor|
+      sensor['id'] == 'front_button'
+    end
+    assert_equal 2, button['on_multi_click'].length
+    button['on_multi_click'].each do |click|
+      actions = click['then'].find { |action| action.key?('if') }['if']['then']
+      assert_includes actions, {'script.execute' => 'dial_back'}
+      refute_includes actions, {'script.execute' => 'dial_simple_click'}
+    end
+  end
+
   def test_assets_have_no_consumer_local_file_dependency
     sources = []
     paths = ['dial.yaml'] + Dir.chdir(ROOT) { Dir['src/pages/*.yaml'] }
