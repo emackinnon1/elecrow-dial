@@ -80,6 +80,16 @@ touchscreen:
           id: dial_register_activity
           source: "touch"
       - lambda: |-
+          if (id(in_light) && id(btn_palette) != nullptr) {
+            lv_area_t palette_area;
+            lv_obj_get_coords(id(btn_palette), &palette_area);
+            const bool palette_hit = touch.x >= palette_area.x1 && touch.x <= palette_area.x2 &&
+                                     touch.y >= palette_area.y1 && touch.y <= palette_area.y2;
+            ESP_LOGI("touch_map", "mapped=(%d,%d) raw=(%d,%d) palette=[%d,%d..%d,%d] hit=%s",
+                     touch.x, touch.y, touch.x_raw, touch.y_raw,
+                     palette_area.x1, palette_area.y1, palette_area.x2, palette_area.y2,
+                     palette_hit ? "yes" : "no");
+          }
           if (id(idle_event_consumed)) {
             id(idle_touch_sequence_consumed) = true;
             id(swipe_gesture_handled) = true;
