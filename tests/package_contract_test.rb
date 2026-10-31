@@ -199,6 +199,22 @@ class PackageContractTest < Minitest::Test
     assert_equal 'page_colorpicker', opener['then'].last['lvgl.page.show']['id']
   end
 
+  def test_light_brightness_tracks_home_assistant_updates
+    light = load_yaml('src/pages/light.yaml')
+    sync = light['script'].find { |script| script['id'] == 'light_on_ha_brightness_update' }
+    assert_includes sync['then'].inspect, 'load_active_snapshot'
+    assert_includes sync['then'].inspect, 'active_brightness_percent'
+    assert_includes sync['then'].inspect, 'light_user_adjusting'
+
+    queue = light['script'].find { |script| script['id'] == 'queue_light_brightness' }
+    assert_includes queue['then'].inspect, 'load_active_snapshot'
+    assert_includes queue['then'].inspect, 'active_brightness_valid'
+
+    sensors = load_yaml(TEMPLATE)['sensor']
+    brightness = sensors.find { |sensor| sensor['id'] == 'dial_light_${light_sensor_prefix}_brightness' }
+    assert_includes brightness['on_value'], {'script.execute' => 'light_on_ha_brightness_update'}
+  end
+
   def test_assets_have_no_consumer_local_file_dependency
     sources = []
     paths = ['dial.yaml'] + Dir.chdir(ROOT) { Dir['src/pages/*.yaml'] }
