@@ -144,12 +144,6 @@ globals:
   - id: light_requested_brightness
     type: int
     initial_value: '75'
-  - id: light_brightness_action_sent
-    type: bool
-    initial_value: 'false'
-  - id: light_ha_brightness_received_after_send
-    type: bool
-    initial_value: 'false'
   - id: light_multilight_active
     type: bool
     restore_value: no
@@ -163,7 +157,7 @@ script:
           const std::string target_entity = id(light_multilight_active)
               ? id(dial_lights_id).active_entity_id()
               : std::string("${light_entity}");
-          ESP_LOGI("light_ha", "send_light_turn_on entity=%s rgb=%d kelvin=%d brightness=%d brightness_pct=%d",
+          ESP_LOGI("light_ha", "send_light_turn_on entity=%s supports_rgb=%d supports_color_temp=%d supports_brightness=%d brightness_pct=%d",
                    target_entity.c_str(), id(light_supports_rgb), id(light_supports_color_temp),
                    id(light_supports_brightness), id(light_brightness));
       - if:
@@ -276,28 +270,55 @@ script:
           condition:
             lambda: 'return id(light_on) && id(light_supports_brightness);'
           then:
-            - lambda: |-
-                id(light_brightness_action_sent) = true;
             - script.execute: send_light_turn_on
       - delay: 600ms
       - lambda: |-
           id(light_user_adjusting) = false;
           int requested = id(light_requested_brightness);
           int received = id(light_last_ha_brightness);
-          bool confirmed = id(light_ha_brightness_received_after_send) &&
-                           received >= 0 && abs(received - requested) <= 2;
-          if (confirmed) {
+          if (id(light_multilight_active)) {
+            id(dial_lights_id).load_active_snapshot();
+            if (id(dial_lights_id).active_brightness_valid()) {
+              received = id(dial_lights_id).active_brightness_percent();
+            }
+          }
+          if (received >= 0) {
+            id(light_last_ha_brightness) = received;
             id(light_brightness) = received;
+            id(light_requested_brightness) = received;
             ESP_LOGI("light_ha", "reconciled brightness=%d from Home Assistant (requested=%d)",
-                     id(light_brightness), requested);
+                     received, requested);
           } else {
             id(light_brightness) = requested;
             ESP_LOGI("light_ha", "kept requested brightness=%d; HA value=%d was not a matching confirmation",
                      requested, received);
           }
-          id(light_brightness_action_sent) = false;
-          id(light_ha_brightness_received_after_send) = false;
       - script.execute: refresh_light_arc
+
+  - id: light_on_ha_brightness_update
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(in_light) && id(light_multilight_active);
+          then:
+            - lambda: |-
+                id(dial_lights_id).load_active_snapshot();
+                if (id(dial_lights_id).active_brightness_valid()) {
+                  const int received = id(dial_lights_id).active_brightness_percent();
+                  id(light_last_ha_brightness) = received;
+                  if (!id(light_user_adjusting)) {
+                    id(light_brightness) = received;
+                    id(light_requested_brightness) = received;
+                  }
+                }
+            - if:
+                condition:
+                  lambda: |-
+                    return !id(light_user_adjusting) &&
+                           id(dial_lights_id).active_brightness_valid();
+                then:
+                  - script.execute: refresh_light_arc
 
   - id: open_light
     then:
@@ -640,8 +661,6 @@ script:
           if (v > 100) v = 100;
           id(light_brightness) = v;
           id(light_requested_brightness) = v;
-          id(light_brightness_action_sent) = false;
-          id(light_ha_brightness_received_after_send) = false;
           id(light_user_adjusting) = true;
       - script.execute: refresh_light_arc
       - script.execute: queue_light_brightness
@@ -653,8 +672,6 @@ script:
           if (v < 0) v = 0;
           id(light_brightness) = v;
           id(light_requested_brightness) = v;
-          id(light_brightness_action_sent) = false;
-          id(light_ha_brightness_received_after_send) = false;
           id(light_user_adjusting) = true;
       - script.execute: refresh_light_arc
       - script.execute: queue_light_brightness

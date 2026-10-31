@@ -29,6 +29,7 @@ sensor:
     internal: true
     on_value:
       - script.execute: menu_on_ha_update
+      - script.execute: light_on_ha_brightness_update
   - platform: homeassistant
     id: dial_light_${light_sensor_prefix}_color_temp_kelvin
     entity_id: ${light_entity_id}
