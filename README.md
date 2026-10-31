@@ -100,7 +100,7 @@ appear as separate choices.
 Static images and the music icon font download from this repository at build
 time, then embed in the firmware. Google Fonts and pinned external components
 also download during the build. The device does not fetch these static UI
-assets at runtime; SendSpin artwork remains a separate runtime feature.
+assets at runtime; the music page uses its bundled cover placeholder.
 
 The example uses `package_ref: main` for both the remote package and its
 `asset_ref`, including all per-light template imports in the same package.
@@ -147,9 +147,10 @@ power-hold, NFC, RTC or buzzer configuration is included.
   after 30 minutes. Dim level is 20%. These defaults are substitutions.
   Return-to-menu preserves the actual source implementation, whose README
   describes return-to-clock instead. First input after DIM/OFF only wakes.
-- Music: original SendSpin components and artwork placeholder retained.
-  HA controls target the selected media player; live art still requires a
-  compatible SendSpin source. No local speaker/audio output is configured.
+- Music: HA media-player state and attributes provide playback status, metadata,
+  volume, duration and position. Transport and volume actions target the selected
+  media player; the bundled cover placeholder is shown. No local speaker/audio
+  output is configured.
 - Timer: when enabled, finish feedback remains visual and wakes the display;
   timer, climate and music beeps are omitted.
 
@@ -160,10 +161,10 @@ per physical detent. Other page controls retain their source handlers.
 ## Validate and Install
 
 Use your existing Home Assistant ESPHome Validate/build/OTA workflow. No local
-build environment or firmware flash is part of this change. The source pins
-ESPHome 2026.7.0 in its requirements; compatibility with your installed version
-still needs ESPHome validation and a successful build. Initial builds download
-the external components, images and fonts.
+build environment or firmware flash is part of this change. Use the ESPHome
+version installed by your Home Assistant ESPHome integration/add-on and confirm
+the package with validation and a successful build. Initial builds download the
+external components, images and fonts.
 
 The static package checks use Ruby's standard library and Minitest:
 
@@ -194,8 +195,8 @@ After validation and your OTA upload, check:
    Pressing the screen must not cause an unintended touch-plus-button action.
 3. All configured lights show HA state/capabilities and control the correct entities;
    group/member changes refresh. Climate and music actions round-trip to HA.
-4. Clock synchronizes in Chicago time, weather units match HA, and SendSpin
-   safely falls back to its placeholder without a compatible source.
+4. Clock synchronizes in Chicago time, weather units match HA, and music
+  metadata, controls and progress follow the configured HA media player.
 5. Dim/return/off stages work; the entire first touch/turn/press only wakes,
    brightness restores, and no competing old timeout turns off the screen.
 6. Reconnection and missing entities behave sensibly. Check the build's RAM,
@@ -217,8 +218,5 @@ External components are pinned to:
 
 - `dial_lights`, `dial_carousel`: `4d7c49c45713a4a145336a5c8dbb95d42c7f7fb5`
   from `fix/light_entity_fixes`, using the explicit sensor-binding interface.
-- `generic_image`, `media_source`, `sendspin`:
-  `c0d6a0bd8401486ca1fa7ad3ae3bfbcaff036b94`, as in the source music page.
-
 See [LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for
 the original attribution and third-party asset notices.

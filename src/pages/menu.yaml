@@ -418,7 +418,6 @@ script:
                 snprintf(subbuf, sizeof(subbuf), "Paused");
               } else if (status == "playing" || status == "buffering") {
                 std::string title = id(ha_media_title).state;
-                if (title.empty()) title = id(track_title).state;
                 if (!title.empty())
                   snprintf(subbuf, sizeof(subbuf), "%s", title.c_str());
                 else

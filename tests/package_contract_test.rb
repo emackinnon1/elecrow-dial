@@ -215,6 +215,47 @@ class PackageContractTest < Minitest::Test
     assert_includes brightness['on_value'], {'script.execute' => 'light_on_ha_brightness_update'}
   end
 
+  def test_music_uses_home_assistant_media_player_only
+    music = load_yaml('src/pages/music.yaml')
+    refute_match(/sendspin/i, music.to_s)
+    refute music.key?('external_components')
+
+    text_sensors = music.fetch('text_sensor')
+    %w[ha_media_title ha_media_artist media_player_status].each do |id|
+      sensor = text_sensors.find { |item| item['id'] == id }
+      refute_nil sensor, "Missing music text sensor #{id}"
+      assert_equal 'homeassistant', sensor['platform']
+      assert_equal '${music_player_entity}', sensor['entity_id']
+    end
+
+    sensors = music.fetch('sensor')
+    {
+      'ha_media_volume' => 'volume_level',
+      'ha_media_duration' => 'media_duration',
+      'ha_media_position' => 'media_position'
+    }.each do |id, attribute|
+      sensor = sensors.find { |item| item['id'] == id }
+      refute_nil sensor, "Missing music sensor #{id}"
+      assert_equal 'homeassistant', sensor['platform']
+      assert_equal '${music_player_entity}', sensor['entity_id']
+      assert_equal attribute, sensor['attribute']
+    end
+
+    scripts = music.fetch('script').to_h { |script| [script['id'], script] }
+    {
+      'play_next' => 'media_player.media_next_track',
+      'play_prev' => 'media_player.media_previous_track',
+      'play_toggle' => 'media_player.media_play_pause',
+      'music_volume_up' => 'media_player.volume_set',
+      'music_volume_down' => 'media_player.volume_set'
+    }.each do |id, action|
+      script = scripts.fetch(id)
+      assert_includes script.to_s, action
+      assert_includes script.to_s, '${music_player_entity}'
+    end
+    assert_includes music.fetch('lvgl').to_s, 'place_holder'
+  end
+
   def test_assets_have_no_consumer_local_file_dependency
     sources = []
     paths = ['dial.yaml'] + Dir.chdir(ROOT) { Dir['src/pages/*.yaml'] }
