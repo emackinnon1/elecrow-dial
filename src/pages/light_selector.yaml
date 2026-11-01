@@ -488,6 +488,7 @@ script:
           id(light_color_h_prev) = 252;
           id(light_user_adjusting) = false;
           id(light_last_ha_brightness) = -1;
+          id(light_brightness_pending_until_ms) = 0;
           id(light_requested_brightness) = 75;
 
           if (id(dial_lights_id).active_has_valid_state()) {

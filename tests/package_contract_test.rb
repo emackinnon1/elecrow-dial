@@ -209,10 +209,69 @@ class PackageContractTest < Minitest::Test
     queue = light['script'].find { |script| script['id'] == 'queue_light_brightness' }
     assert_includes queue['then'].inspect, 'load_active_snapshot'
     assert_includes queue['then'].inspect, 'active_brightness_valid'
+    assert_includes queue['then'].inspect, 'send_light_brightness'
+    refute_includes queue['then'].inspect, 'send_light_turn_on'
+    assert_includes queue['then'].inspect, 'light_brightness_pending_until_ms'
+    assert_includes queue['then'].inspect, 'waiting for brightness confirmation'
+
+    brightness_sync = light['script'].find { |script| script['id'] == 'light_on_ha_brightness_update' }
+    assert_includes brightness_sync.to_s, 'ignoring stale brightness'
+    assert_includes brightness_sync.to_s, 'light_brightness_pending_until_ms'
+
+    brightness_action = light['script'].find { |script| script['id'] == 'send_light_brightness' }
+    assert_includes brightness_action.to_s, 'brightness_pct'
+    refute_includes brightness_action.to_s, 'rgb_color'
+    refute_includes brightness_action.to_s, 'color_temp_kelvin'
 
     sensors = load_yaml(TEMPLATE)['sensor']
     brightness = sensors.find { |sensor| sensor['id'] == 'dial_light_${light_sensor_prefix}_brightness' }
     assert_includes brightness['on_value'], {'script.execute' => 'light_on_ha_brightness_update'}
+  end
+
+  def test_encoder_calibration_defaults_are_wired
+    substitutions = load_yaml('src/main/defaults.yaml')['substitutions']
+    assert_equal 'GPIO45', substitutions['encoder_pin_a']
+    assert_equal 'GPIO42', substitutions['encoder_pin_b']
+    assert_equal '1', substitutions['encoder_resolution']
+
+    encoder = load_yaml('src/main/hardware.yaml')['sensor'].find do |sensor|
+      sensor['id'] == 'encoder'
+    end
+    assert_equal '${encoder_pin_a}', encoder.dig('pin_a', 'number')
+    assert_equal '${encoder_pin_b}', encoder.dig('pin_b', 'number')
+    assert_equal '${encoder_resolution}', encoder['resolution']
+  end
+
+  def test_light_color_attributes_refresh_and_kelvin_is_default
+    template = load_yaml(TEMPLATE)
+    color_text = %w[modes rgb color_mode].map do |suffix|
+      template.fetch('text_sensor').find do |sensor|
+        sensor['id'] == "dial_light_${light_sensor_prefix}_#{suffix}"
+      end
+    end
+    color_numeric = %w[color_temp_kelvin min_color_temp_kelvin max_color_temp_kelvin].map do |suffix|
+      template.fetch('sensor').find do |sensor|
+        sensor['id'] == "dial_light_${light_sensor_prefix}_#{suffix}"
+      end
+    end
+    (color_text + color_numeric).each do |sensor|
+      assert_includes sensor['on_value'], {'script.execute' => 'light_on_ha_color_update'}
+    end
+
+    light = load_yaml('src/pages/light.yaml')
+    color_update = light.fetch('script').find { |script| script['id'] == 'light_on_ha_color_update' }
+    assert_includes color_update.to_s, 'active_color_temp_kelvin'
+    assert_includes color_update.to_s, 'active_color_r'
+    assert_includes color_update.to_s, 'active_color_h'
+    assert_includes color_update.to_s, '!id(in_colorpicker)'
+
+    open_picker = light.fetch('script').find { |script| script['id'] == 'open_colorpicker' }
+    assert_includes open_picker.to_s, 'id(light_color_picker_mode) = 1'
+    assert_includes open_picker.to_s, 'active_color_temp_kelvin'
+    assert_includes open_picker.to_s, 'active_color_h'
+
+    close_picker = light.fetch('script').find { |script| script['id'] == 'close_colorpicker' }
+    assert_includes close_picker.to_s, 'light_on_ha_color_update'
   end
 
   def test_music_uses_home_assistant_media_player_only

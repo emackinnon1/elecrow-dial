@@ -154,9 +154,12 @@ power-hold, NFC, RTC or buzzer configuration is included.
 - Timer: when enabled, finish feedback remains visual and wakes the display;
   timer, climate and music beeps are omitted.
 
-`encoder_control_steps` starts at `1` for light-selector and climate actions,
-matching the Elecrow's existing resolution. Tune it only after measuring steps
-per physical detent. Other page controls retain their source handlers.
+Encoder calibration is configurable with `encoder_pin_a` (GPIO45),
+`encoder_pin_b` (GPIO42), and `encoder_resolution` (`1`). ESPHome supports
+resolution values `1`, `2`, and `4`; change one at a time to address missed or
+doubled detents. Swap the A/B pin assignments if direction is consistently
+reversed. `encoder_control_steps` is a separate software threshold used by the
+light selector and climate controls; it does not change light-brightness steps.
 
 ## Validate and Install
 

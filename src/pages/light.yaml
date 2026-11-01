@@ -141,6 +141,10 @@ globals:
   - id: light_last_ha_brightness
     type: int
     initial_value: '-1'
+  - id: light_brightness_pending_until_ms
+    type: uint32_t
+    restore_value: false
+    initial_value: '0'
   - id: light_requested_brightness
     type: int
     initial_value: '75'
@@ -262,6 +266,21 @@ script:
                     return std::string("${light_entity}");
                   kelvin: !lambda "return id(light_white_kelvin);"
 
+  - id: send_light_brightness
+    then:
+      - homeassistant.action:
+          action: light.turn_on
+          data_template:
+            entity_id: "{{ target_entity }}"
+            brightness_pct: "{{ brightness | int }}"
+          variables:
+            target_entity: !lambda |-
+              if (id(light_multilight_active)) {
+                return id(dial_lights_id).active_entity_id();
+              }
+              return std::string("${light_entity}");
+            brightness: !lambda "return id(light_brightness);"
+
   - id: queue_light_brightness
     mode: restart
     then:
@@ -270,10 +289,9 @@ script:
           condition:
             lambda: 'return id(light_on) && id(light_supports_brightness);'
           then:
-            - script.execute: send_light_turn_on
-      - delay: 600ms
+            - script.execute: send_light_brightness
+      - delay: 1800ms
       - lambda: |-
-          id(light_user_adjusting) = false;
           int requested = id(light_requested_brightness);
           int received = id(light_last_ha_brightness);
           if (id(light_multilight_active)) {
@@ -282,15 +300,29 @@ script:
               received = id(dial_lights_id).active_brightness_percent();
             }
           }
-          if (received >= 0) {
+          if (received >= 0 && received >= requested - 1 && received <= requested + 1) {
             id(light_last_ha_brightness) = received;
             id(light_brightness) = received;
             id(light_requested_brightness) = received;
+            id(light_user_adjusting) = false;
             ESP_LOGI("light_ha", "reconciled brightness=%d from Home Assistant (requested=%d)",
                      received, requested);
+          } else if ((int32_t)(id(light_brightness_pending_until_ms) - millis()) <= 0) {
+            if (received >= 0) {
+              id(light_last_ha_brightness) = received;
+              id(light_brightness) = received;
+              id(light_requested_brightness) = received;
+              ESP_LOGW("light_ha", "brightness confirmation timed out; using HA value=%d (requested=%d)",
+                       received, requested);
+            } else {
+              id(light_brightness) = requested;
+              ESP_LOGW("light_ha", "brightness confirmation timed out without a valid HA value; keeping=%d",
+                       requested);
+            }
+            id(light_user_adjusting) = false;
           } else {
             id(light_brightness) = requested;
-            ESP_LOGI("light_ha", "kept requested brightness=%d; HA value=%d was not a matching confirmation",
+            ESP_LOGI("light_ha", "waiting for brightness confirmation requested=%d HA=%d",
                      requested, received);
           }
       - script.execute: refresh_light_arc
@@ -306,10 +338,23 @@ script:
                 id(dial_lights_id).load_active_snapshot();
                 if (id(dial_lights_id).active_brightness_valid()) {
                   const int received = id(dial_lights_id).active_brightness_percent();
-                  id(light_last_ha_brightness) = received;
-                  if (!id(light_user_adjusting)) {
+                  const bool confirmed =
+                      received >= id(light_requested_brightness) - 1 &&
+                      received <= id(light_requested_brightness) + 1;
+                  const bool timed_out =
+                      (int32_t)(id(light_brightness_pending_until_ms) - millis()) <= 0;
+                  if (!id(light_user_adjusting) || confirmed || timed_out) {
+                    if (id(light_user_adjusting) && !confirmed) {
+                      ESP_LOGW("light_ha", "brightness confirmation timed out; using HA value=%d (requested=%d)",
+                               received, id(light_requested_brightness));
+                    }
+                    id(light_last_ha_brightness) = received;
                     id(light_brightness) = received;
                     id(light_requested_brightness) = received;
+                    id(light_user_adjusting) = false;
+                  } else {
+                    ESP_LOGI("light_ha", "ignoring stale brightness=%d while waiting for requested=%d",
+                             received, id(light_requested_brightness));
                   }
                 }
             - if:
@@ -319,6 +364,44 @@ script:
                            id(dial_lights_id).active_brightness_valid();
                 then:
                   - script.execute: refresh_light_arc
+
+  - id: light_on_ha_color_update
+    then:
+      - if:
+          condition:
+            lambda: |-
+              return id(in_light) && id(light_multilight_active) && !id(in_colorpicker);
+          then:
+            - lambda: |-
+                id(dial_lights_id).load_active_snapshot();
+                id(light_supports_brightness) = id(dial_lights_id).active_supports_brightness();
+                id(light_supports_rgb) = id(dial_lights_id).active_supports_rgb();
+                id(light_supports_color_temp) = id(dial_lights_id).active_supports_color_temp();
+                if (id(dial_lights_id).active_color_mode_valid()) {
+                  id(light_ha_color_mode_is_temp) = id(dial_lights_id).active_is_color_temp_mode();
+                }
+
+                int min_k = id(dial_lights_id).active_min_color_temp_kelvin();
+                int max_k = id(dial_lights_id).active_max_color_temp_kelvin();
+                if (min_k > max_k) { int tmp = min_k; min_k = max_k; max_k = tmp; }
+                if (max_k - min_k < 1) max_k = min_k + 1;
+                id(light_white_kelvin_min) = min_k;
+                id(light_white_kelvin_max) = max_k;
+                if (id(dial_lights_id).active_color_temp_valid()) {
+                  int kelvin = id(dial_lights_id).active_color_temp_kelvin();
+                  if (kelvin < min_k) kelvin = min_k;
+                  if (kelvin > max_k) kelvin = max_k;
+                  id(light_white_kelvin) = kelvin;
+                }
+                if (id(dial_lights_id).active_color_valid()) {
+                  id(light_color_r) = id(dial_lights_id).active_color_r();
+                  id(light_color_g) = id(dial_lights_id).active_color_g();
+                  id(light_color_b) = id(dial_lights_id).active_color_b();
+                  const int hue = id(dial_lights_id).active_color_h();
+                  id(light_color_h) = hue;
+                  id(light_color_h_prev) = hue;
+                }
+            - script.execute: refresh_light_arc
 
   - id: open_light
     then:
@@ -365,12 +448,8 @@ script:
   - id: open_colorpicker
     then:
       - lambda: |-
-          id(light_color_h_prev) = id(light_color_h);
-          id(light_white_kelvin_prev) = id(light_white_kelvin);
-
           bool rgb = id(light_supports_rgb);
           bool ct = id(light_supports_color_temp);
-          bool mode_is_temp = id(light_ha_color_mode_is_temp);
 
           if (id(light_multilight_active)) {
             rgb = id(dial_lights_id).active_supports_rgb();
@@ -378,7 +457,7 @@ script:
             id(light_supports_rgb) = rgb;
             id(light_supports_color_temp) = ct;
             if (id(dial_lights_id).active_color_mode_valid()) {
-              mode_is_temp = id(dial_lights_id).active_is_color_temp_mode();
+              id(light_ha_color_mode_is_temp) = id(dial_lights_id).active_is_color_temp_mode();
             }
             int min_k = id(dial_lights_id).active_min_color_temp_kelvin();
             int max_k = id(dial_lights_id).active_max_color_temp_kelvin();
@@ -391,6 +470,12 @@ script:
               if (k < min_k) k = min_k;
               if (k > max_k) k = max_k;
               id(light_white_kelvin) = k;
+            }
+            if (id(dial_lights_id).active_color_valid()) {
+              id(light_color_r) = id(dial_lights_id).active_color_r();
+              id(light_color_g) = id(dial_lights_id).active_color_g();
+              id(light_color_b) = id(dial_lights_id).active_color_b();
+              id(light_color_h) = id(dial_lights_id).active_color_h();
             }
           } else {
             int min_k = id(light_white_kelvin_min);
@@ -408,13 +493,14 @@ script:
           }
 
           if (rgb && ct) {
-            id(light_color_picker_mode) = mode_is_temp ? 1 : 0;
+            id(light_color_picker_mode) = 1;
           } else if (rgb) {
             id(light_color_picker_mode) = 0;
           } else {
             id(light_color_picker_mode) = 1;
           }
 
+          id(light_color_h_prev) = id(light_color_h);
           id(light_white_kelvin_prev) = id(light_white_kelvin);
           ESP_LOGI("light_ui", "Opening color picker: rgb=%d kelvin=%d mode=%d",
                    rgb, ct, id(light_color_picker_mode));
@@ -432,6 +518,7 @@ script:
           id(light_white_kelvin) = id(light_white_kelvin_prev);
       - globals.set: {id: in_colorpicker, value: 'false'}
       - globals.set: {id: in_light, value: 'true'}
+      - script.execute: light_on_ha_color_update
       - lvgl.page.show:
           id: page_light
           animation: MOVE_RIGHT
@@ -662,6 +749,7 @@ script:
           id(light_brightness) = v;
           id(light_requested_brightness) = v;
           id(light_user_adjusting) = true;
+          id(light_brightness_pending_until_ms) = millis() + 2000;
       - script.execute: refresh_light_arc
       - script.execute: queue_light_brightness
 
@@ -673,6 +761,7 @@ script:
           id(light_brightness) = v;
           id(light_requested_brightness) = v;
           id(light_user_adjusting) = true;
+          id(light_brightness_pending_until_ms) = millis() + 2000;
       - script.execute: refresh_light_arc
       - script.execute: queue_light_brightness
 
