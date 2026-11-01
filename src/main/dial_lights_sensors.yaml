@@ -10,16 +10,22 @@ text_sensor:
     entity_id: ${light_entity_id}
     attribute: supported_color_modes
     internal: true
+    on_value:
+      - script.execute: light_on_ha_color_update
   - platform: homeassistant
     id: dial_light_${light_sensor_prefix}_rgb
     entity_id: ${light_entity_id}
     attribute: rgb_color
     internal: true
+    on_value:
+      - script.execute: light_on_ha_color_update
   - platform: homeassistant
     id: dial_light_${light_sensor_prefix}_color_mode
     entity_id: ${light_entity_id}
     attribute: color_mode
     internal: true
+    on_value:
+      - script.execute: light_on_ha_color_update
 
 sensor:
   - platform: homeassistant
@@ -29,18 +35,25 @@ sensor:
     internal: true
     on_value:
       - script.execute: menu_on_ha_update
+      - script.execute: light_on_ha_brightness_update
   - platform: homeassistant
     id: dial_light_${light_sensor_prefix}_color_temp_kelvin
     entity_id: ${light_entity_id}
     attribute: color_temp_kelvin
     internal: true
+    on_value:
+      - script.execute: light_on_ha_color_update
   - platform: homeassistant
     id: dial_light_${light_sensor_prefix}_min_color_temp_kelvin
     entity_id: ${light_entity_id}
     attribute: min_color_temp_kelvin
     internal: true
+    on_value:
+      - script.execute: light_on_ha_color_update
   - platform: homeassistant
     id: dial_light_${light_sensor_prefix}_max_color_temp_kelvin
     entity_id: ${light_entity_id}
     attribute: max_color_temp_kelvin
     internal: true
+    on_value:
+      - script.execute: light_on_ha_color_update

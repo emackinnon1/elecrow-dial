@@ -189,12 +189,12 @@ sensor:
     id: encoder
     name: "Encoder"
     pin_a:
-      number: GPIO45
+      number: ${encoder_pin_a}
       mode: INPUT_PULLUP
     pin_b:
-      number: GPIO42
+      number: ${encoder_pin_b}
       mode: INPUT_PULLUP
-    resolution: 1
+    resolution: ${encoder_resolution}
     min_value: -100000
     max_value: 100000
     on_clockwise:

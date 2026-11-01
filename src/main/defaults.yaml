@@ -9,5 +9,8 @@ substitutions:
   screen_off_timeout: 30min
   screen_dim_brightness: "20%"
   encoder_control_steps: "1"
+  encoder_pin_a: GPIO45
+  encoder_pin_b: GPIO42
+  encoder_resolution: "1"
   asset_ref: main
   assets_base_url: https://raw.githubusercontent.com/emackinnon1/elecrow-dial/${asset_ref}/src/assets

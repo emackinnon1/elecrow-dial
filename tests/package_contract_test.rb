@@ -199,6 +199,122 @@ class PackageContractTest < Minitest::Test
     assert_equal 'page_colorpicker', opener['then'].last['lvgl.page.show']['id']
   end
 
+  def test_light_brightness_tracks_home_assistant_updates
+    light = load_yaml('src/pages/light.yaml')
+    sync = light['script'].find { |script| script['id'] == 'light_on_ha_brightness_update' }
+    assert_includes sync['then'].inspect, 'load_active_snapshot'
+    assert_includes sync['then'].inspect, 'active_brightness_percent'
+    assert_includes sync['then'].inspect, 'light_user_adjusting'
+
+    queue = light['script'].find { |script| script['id'] == 'queue_light_brightness' }
+    assert_includes queue['then'].inspect, 'load_active_snapshot'
+    assert_includes queue['then'].inspect, 'active_brightness_valid'
+    assert_includes queue['then'].inspect, 'send_light_brightness'
+    refute_includes queue['then'].inspect, 'send_light_turn_on'
+    assert_includes queue['then'].inspect, 'light_brightness_pending_until_ms'
+    assert_includes queue['then'].inspect, 'waiting for brightness confirmation'
+
+    brightness_sync = light['script'].find { |script| script['id'] == 'light_on_ha_brightness_update' }
+    assert_includes brightness_sync.to_s, 'ignoring stale brightness'
+    assert_includes brightness_sync.to_s, 'light_brightness_pending_until_ms'
+
+    brightness_action = light['script'].find { |script| script['id'] == 'send_light_brightness' }
+    assert_includes brightness_action.to_s, 'brightness_pct'
+    refute_includes brightness_action.to_s, 'rgb_color'
+    refute_includes brightness_action.to_s, 'color_temp_kelvin'
+
+    sensors = load_yaml(TEMPLATE)['sensor']
+    brightness = sensors.find { |sensor| sensor['id'] == 'dial_light_${light_sensor_prefix}_brightness' }
+    assert_includes brightness['on_value'], {'script.execute' => 'light_on_ha_brightness_update'}
+  end
+
+  def test_encoder_calibration_defaults_are_wired
+    substitutions = load_yaml('src/main/defaults.yaml')['substitutions']
+    assert_equal 'GPIO45', substitutions['encoder_pin_a']
+    assert_equal 'GPIO42', substitutions['encoder_pin_b']
+    assert_equal '1', substitutions['encoder_resolution']
+
+    encoder = load_yaml('src/main/hardware.yaml')['sensor'].find do |sensor|
+      sensor['id'] == 'encoder'
+    end
+    assert_equal '${encoder_pin_a}', encoder.dig('pin_a', 'number')
+    assert_equal '${encoder_pin_b}', encoder.dig('pin_b', 'number')
+    assert_equal '${encoder_resolution}', encoder['resolution']
+  end
+
+  def test_light_color_attributes_refresh_and_kelvin_is_default
+    template = load_yaml(TEMPLATE)
+    color_text = %w[modes rgb color_mode].map do |suffix|
+      template.fetch('text_sensor').find do |sensor|
+        sensor['id'] == "dial_light_${light_sensor_prefix}_#{suffix}"
+      end
+    end
+    color_numeric = %w[color_temp_kelvin min_color_temp_kelvin max_color_temp_kelvin].map do |suffix|
+      template.fetch('sensor').find do |sensor|
+        sensor['id'] == "dial_light_${light_sensor_prefix}_#{suffix}"
+      end
+    end
+    (color_text + color_numeric).each do |sensor|
+      assert_includes sensor['on_value'], {'script.execute' => 'light_on_ha_color_update'}
+    end
+
+    light = load_yaml('src/pages/light.yaml')
+    color_update = light.fetch('script').find { |script| script['id'] == 'light_on_ha_color_update' }
+    assert_includes color_update.to_s, 'active_color_temp_kelvin'
+    assert_includes color_update.to_s, 'active_color_r'
+    assert_includes color_update.to_s, 'active_color_h'
+    assert_includes color_update.to_s, '!id(in_colorpicker)'
+
+    open_picker = light.fetch('script').find { |script| script['id'] == 'open_colorpicker' }
+    assert_includes open_picker.to_s, 'id(light_color_picker_mode) = 1'
+    assert_includes open_picker.to_s, 'active_color_temp_kelvin'
+    assert_includes open_picker.to_s, 'active_color_h'
+
+    close_picker = light.fetch('script').find { |script| script['id'] == 'close_colorpicker' }
+    assert_includes close_picker.to_s, 'light_on_ha_color_update'
+  end
+
+  def test_music_uses_home_assistant_media_player_only
+    music = load_yaml('src/pages/music.yaml')
+    refute_match(/sendspin/i, music.to_s)
+    refute music.key?('external_components')
+
+    text_sensors = music.fetch('text_sensor')
+    %w[ha_media_title ha_media_artist media_player_status].each do |id|
+      sensor = text_sensors.find { |item| item['id'] == id }
+      refute_nil sensor, "Missing music text sensor #{id}"
+      assert_equal 'homeassistant', sensor['platform']
+      assert_equal '${music_player_entity}', sensor['entity_id']
+    end
+
+    sensors = music.fetch('sensor')
+    {
+      'ha_media_volume' => 'volume_level',
+      'ha_media_duration' => 'media_duration',
+      'ha_media_position' => 'media_position'
+    }.each do |id, attribute|
+      sensor = sensors.find { |item| item['id'] == id }
+      refute_nil sensor, "Missing music sensor #{id}"
+      assert_equal 'homeassistant', sensor['platform']
+      assert_equal '${music_player_entity}', sensor['entity_id']
+      assert_equal attribute, sensor['attribute']
+    end
+
+    scripts = music.fetch('script').to_h { |script| [script['id'], script] }
+    {
+      'play_next' => 'media_player.media_next_track',
+      'play_prev' => 'media_player.media_previous_track',
+      'play_toggle' => 'media_player.media_play_pause',
+      'music_volume_up' => 'media_player.volume_set',
+      'music_volume_down' => 'media_player.volume_set'
+    }.each do |id, action|
+      script = scripts.fetch(id)
+      assert_includes script.to_s, action
+      assert_includes script.to_s, '${music_player_entity}'
+    end
+    assert_includes music.fetch('lvgl').to_s, 'place_holder'
+  end
+
   def test_assets_have_no_consumer_local_file_dependency
     sources = []
     paths = ['dial.yaml'] + Dir.chdir(ROOT) { Dir['src/pages/*.yaml'] }
